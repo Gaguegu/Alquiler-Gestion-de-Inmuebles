@@ -1,0 +1,6 @@
+{
+  "name": "ANSAMA · Gestión de Inmuebles",
+  "description": "Aplicación privada para gestión integral de inmuebles alquilados, contratos, facturas, cobros, gastos e incidencias.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
