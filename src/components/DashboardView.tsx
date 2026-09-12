@@ -14,7 +14,10 @@ import {
   Wrench,
   ChevronRight,
   ShieldCheck,
-  Zap
+  Zap,
+  Calculator,
+  FileCode2,
+  Scale
 } from 'lucide-react';
 
 interface DashboardViewProps {
@@ -25,6 +28,9 @@ interface DashboardViewProps {
   onOpenNewExpense: () => void;
   onOpenNewIssue: () => void;
   onSelectInvoiceForPrint: (invoiceId: string) => void;
+  onOpenIpcCalculator?: () => void;
+  onOpenSepaRemittance?: () => void;
+  onOpenLegalTemplates?: () => void;
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
@@ -35,6 +41,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onOpenNewExpense,
   onOpenNewIssue,
   onSelectInvoiceForPrint,
+  onOpenIpcCalculator,
+  onOpenSepaRemittance,
+  onOpenLegalTemplates,
 }) => {
   const { properties, contracts, invoices, expenses, issues, tenants } = state;
 
@@ -388,6 +397,77 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 })}
               </div>
             )}
+          </div>
+
+          {/* Herramientas de Gestión Profesional */}
+          <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-2xs">
+            <h3 className="text-sm font-bold text-slate-900 mb-3 flex items-center">
+              <ShieldCheck className="w-4 h-4 mr-1.5 text-[#0b4f8a]" />
+              Herramientas & Cumplimiento LAU
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {onOpenIpcCalculator && (
+                <button
+                  onClick={onOpenIpcCalculator}
+                  id="dash-tool-ipc-btn"
+                  className="p-3 text-left rounded-xl border border-sky-100 bg-sky-50/50 hover:bg-sky-100/70 transition-all flex items-start space-x-3 group"
+                >
+                  <div className="p-2 rounded-lg bg-sky-600 text-white shrink-0 group-hover:scale-105 transition-transform">
+                    <Calculator className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-900">Revisión IPC</h4>
+                    <p className="text-[11px] text-slate-500 mt-0.5">Cálculo según Art. 18 LAU e IRAV</p>
+                  </div>
+                </button>
+              )}
+
+              {onOpenSepaRemittance && (
+                <button
+                  onClick={onOpenSepaRemittance}
+                  id="dash-tool-sepa-btn"
+                  className="p-3 text-left rounded-xl border border-indigo-100 bg-indigo-50/50 hover:bg-indigo-100/70 transition-all flex items-start space-x-3 group"
+                >
+                  <div className="p-2 rounded-lg bg-indigo-600 text-white shrink-0 group-hover:scale-105 transition-transform">
+                    <FileCode2 className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-900">Remesas SEPA</h4>
+                    <p className="text-[11px] text-slate-500 mt-0.5">XML ISO 20022 para banca online</p>
+                  </div>
+                </button>
+              )}
+
+              <button
+                onClick={() => setActiveTab('simulator')}
+                id="dash-tool-simulator-btn"
+                className="p-3 text-left rounded-xl border border-emerald-100 bg-emerald-50/50 hover:bg-emerald-100/70 transition-all flex items-start space-x-3 group"
+              >
+                <div className="p-2 rounded-lg bg-emerald-600 text-white shrink-0 group-hover:scale-105 transition-transform">
+                  <TrendingUp className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-slate-900">Simulador Rentabilidad</h4>
+                  <p className="text-[11px] text-slate-500 mt-0.5">Yield bruto, neto y Cash-on-Cash</p>
+                </div>
+              </button>
+
+              {onOpenLegalTemplates && (
+                <button
+                  onClick={onOpenLegalTemplates}
+                  id="dash-tool-legal-btn"
+                  className="p-3 text-left rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 transition-all flex items-start space-x-3 group"
+                >
+                  <div className="p-2 rounded-lg bg-slate-700 text-white shrink-0 group-hover:scale-105 transition-transform">
+                    <Scale className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-900">Modelos Oficiales LAU</h4>
+                    <p className="text-[11px] text-slate-500 mt-0.5">Contratos, anexos y finiquitos</p>
+                  </div>
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>

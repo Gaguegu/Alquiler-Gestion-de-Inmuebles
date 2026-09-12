@@ -13,7 +13,11 @@ import {
   X,
   Building,
   User,
-  ShieldAlert
+  ShieldAlert,
+  Calculator,
+  KeyRound,
+  FileText,
+  Scale
 } from 'lucide-react';
 
 interface ContractsViewProps {
@@ -22,6 +26,9 @@ interface ContractsViewProps {
   tenants: Tenant[];
   onSaveContract: (contract: Contract) => void;
   onDeleteContract: (id: string) => void;
+  onOpenIpcCalculator?: (contractId?: string) => void;
+  onOpenDepositSettlement?: (contractId?: string) => void;
+  onOpenLegalTemplates?: () => void;
 }
 
 export const ContractsView: React.FC<ContractsViewProps> = ({
@@ -30,6 +37,9 @@ export const ContractsView: React.FC<ContractsViewProps> = ({
   tenants,
   onSaveContract,
   onDeleteContract,
+  onOpenIpcCalculator,
+  onOpenDepositSettlement,
+  onOpenLegalTemplates,
 }) => {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingContract, setEditingContract] = useState<Contract | null>(null);
@@ -118,14 +128,52 @@ export const ContractsView: React.FC<ContractsViewProps> = ({
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Contratos de Arrendamiento</h1>
           <p className="text-sm text-slate-500">Supervisión de plazos legales, fianzas depositadas, fechas de renovación y actualización de IPC.</p>
         </div>
-        <button
-          onClick={openNewModal}
-          id="add-contract-btn"
-          className="px-4 py-2.5 bg-[#0b4f8a] hover:bg-[#093d6b] text-white rounded-xl text-xs font-bold shadow-sm transition-colors flex items-center space-x-1.5 self-start"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Nuevo Contrato</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-2 self-start">
+          {onOpenIpcCalculator && (
+            <button
+              onClick={() => onOpenIpcCalculator()}
+              id="open-ipc-modal-btn"
+              className="px-3.5 py-2.5 bg-sky-50 hover:bg-sky-100 text-[#0b4f8a] border border-sky-200 rounded-xl text-xs font-bold transition-colors flex items-center space-x-1.5 shadow-2xs"
+              title="Calcular revisión anual de renta según Art. 18 LAU"
+            >
+              <Calculator className="w-4 h-4" />
+              <span>Calcular IPC</span>
+            </button>
+          )}
+
+          {onOpenDepositSettlement && (
+            <button
+              onClick={() => onOpenDepositSettlement()}
+              id="open-deposit-modal-btn"
+              className="px-3.5 py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded-xl text-xs font-bold transition-colors flex items-center space-x-1.5 shadow-2xs"
+              title="Liquidar finiquito, fianza y entrega de llaves"
+            >
+              <KeyRound className="w-4 h-4" />
+              <span>Liquidar Fianza</span>
+            </button>
+          )}
+
+          {onOpenLegalTemplates && (
+            <button
+              onClick={onOpenLegalTemplates}
+              id="open-legal-templates-btn"
+              className="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-colors flex items-center space-x-1.5"
+              title="Ver modelos oficiales de contrato y documentos LAU"
+            >
+              <Scale className="w-4 h-4" />
+              <span>Modelos LAU</span>
+            </button>
+          )}
+
+          <button
+            onClick={openNewModal}
+            id="add-contract-btn"
+            className="px-4 py-2.5 bg-[#0b4f8a] hover:bg-[#093d6b] text-white rounded-xl text-xs font-bold shadow-sm transition-colors flex items-center space-x-1.5"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Nuevo Contrato</span>
+          </button>
+        </div>
       </div>
 
       {/* Contracts Table */}
@@ -226,6 +274,24 @@ export const ContractsView: React.FC<ContractsViewProps> = ({
 
                       <td className="py-4 px-4 text-right">
                         <div className="flex items-center justify-end space-x-1">
+                          {onOpenIpcCalculator && contract.status === 'activo' && (
+                            <button
+                              onClick={() => onOpenIpcCalculator(contract.id)}
+                              className="p-1.5 text-sky-600 hover:text-sky-800 hover:bg-sky-50 rounded-lg transition-colors"
+                              title="Calcular revisión de renta por IPC para este contrato"
+                            >
+                              <Calculator className="w-4 h-4" />
+                            </button>
+                          )}
+                          {onOpenDepositSettlement && (
+                            <button
+                              onClick={() => onOpenDepositSettlement(contract.id)}
+                              className="p-1.5 text-amber-600 hover:text-amber-800 hover:bg-amber-50 rounded-lg transition-colors"
+                              title="Liquidar fianza y check-out de este contrato"
+                            >
+                              <KeyRound className="w-4 h-4" />
+                            </button>
+                          )}
                           <button
                             onClick={() => openEditModal(contract)}
                             className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg"

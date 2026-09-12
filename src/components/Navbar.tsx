@@ -16,7 +16,10 @@ import {
   Download,
   Menu,
   X,
-  Plus
+  Plus,
+  Search,
+  TrendingUp,
+  Command
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -28,6 +31,7 @@ interface NavbarProps {
   onQuickBackup: () => void;
   pendingInvoicesCount: number;
   openIssuesCount: number;
+  onOpenSearch?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -39,6 +43,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onQuickBackup,
   pendingInvoicesCount,
   openIssuesCount,
+  onOpenSearch,
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -53,6 +58,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     { id: 'issues', label: 'Incidencias', icon: Wrench, badge: openIssuesCount },
     { id: 'documents', label: 'Documentos', icon: FolderLock },
     { id: 'reports', label: 'Informes', icon: BarChart3 },
+    { id: 'simulator', label: 'Simulador Inversión', icon: TrendingUp },
     { id: 'settings', label: 'Ajustes', icon: Settings },
   ];
 
@@ -83,8 +89,24 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           </div>
 
-          {/* Global Property Filter */}
+          {/* Center/Right: Search, Filter, Backup */}
           <div className="hidden md:flex items-center space-x-3">
+            {onOpenSearch && (
+              <button
+                onClick={onOpenSearch}
+                id="navbar-search-btn"
+                className="flex items-center space-x-2 bg-slate-100 hover:bg-slate-200/80 text-slate-500 hover:text-slate-800 text-xs px-3 py-2 rounded-xl border border-slate-200 transition-colors shadow-2xs"
+                title="Búsqueda rápida en todo el sistema (Ctrl+K o Cmd+K)"
+              >
+                <Search className="w-3.5 h-3.5 text-slate-400" />
+                <span className="font-medium">Buscar...</span>
+                <kbd className="hidden lg:inline-flex items-center px-1.5 py-0.5 text-[10px] font-semibold text-slate-500 bg-white border border-slate-200 rounded shadow-2xs">
+                  ⌘K
+                </kbd>
+              </button>
+            )}
+
+            {/* Global Property Filter */}
             <div className="flex items-center bg-slate-100/90 rounded-xl p-1 border border-slate-200">
               <div className="flex items-center pl-2.5 pr-1.5 text-slate-500 text-xs font-medium">
                 <Filter className="w-3.5 h-3.5 mr-1 text-slate-400" />
@@ -117,8 +139,18 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           </div>
 
-          {/* Mobile menu button */}
-          <div className="flex md:hidden items-center space-x-2">
+          {/* Mobile menu and search buttons */}
+          <div className="flex md:hidden items-center space-x-1">
+            {onOpenSearch && (
+              <button
+                onClick={onOpenSearch}
+                id="mobile-search-btn"
+                className="p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                title="Buscar"
+              >
+                <Search className="w-5 h-5" />
+              </button>
+            )}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               id="mobile-nav-toggle-btn"

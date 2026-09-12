@@ -23,7 +23,8 @@ import {
   Filter,
   Edit2,
   Trash2,
-  X
+  X,
+  FileCode2
 } from 'lucide-react';
 
 interface InvoicesViewProps {
@@ -37,6 +38,7 @@ interface InvoicesViewProps {
   onMarkAsPaid: (invoiceId: string) => void;
   onOpenPrintModal: (invoice: Invoice) => void;
   onMassGenerateReceipts: () => void;
+  onOpenSepaRemittance?: () => void;
 }
 
 export const InvoicesView: React.FC<InvoicesViewProps> = ({
@@ -50,6 +52,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
   onMarkAsPaid,
   onOpenPrintModal,
   onMassGenerateReceipts,
+  onOpenSepaRemittance,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -173,7 +176,18 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Facturación y Recibos</h1>
           <p className="text-sm text-slate-500">Emisión de recibos de viviendas exentos de IVA y facturas de locales con IRPF e IVA.</p>
         </div>
-        <div className="flex items-center space-x-2.5 self-start">
+        <div className="flex flex-wrap items-center gap-2 self-start">
+          {onOpenSepaRemittance && (
+            <button
+              onClick={onOpenSepaRemittance}
+              id="open-sepa-btn"
+              className="px-3.5 py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl text-xs font-bold shadow-2xs transition-colors flex items-center space-x-1.5"
+              title="Generar fichero XML SEPA (Norma 19 / pain.008) para domiciliar recibos en banca online"
+            >
+              <FileCode2 className="w-4 h-4" />
+              <span>Remesa SEPA (XML)</span>
+            </button>
+          )}
           <button
             onClick={onMassGenerateReceipts}
             id="mass-generate-receipts-btn"

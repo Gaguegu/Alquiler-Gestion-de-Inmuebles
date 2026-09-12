@@ -1,7 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Invoice, Property, Tenant, LandlordSettings } from '../types';
 import { formatCurrency, formatDate } from '../utils/storage';
-import { Printer, X, Download, Building, CheckCircle, Clock } from 'lucide-react';
+import {
+  Printer,
+  X,
+  Download,
+  Building,
+  CheckCircle,
+  Clock,
+  MessageCircle,
+  Copy,
+  Check,
+  Share2
+} from 'lucide-react';
 
 interface InvoicePrintModalProps {
   invoice: Invoice | null;
@@ -18,10 +29,38 @@ export const InvoicePrintModal: React.FC<InvoicePrintModalProps> = ({
   settings,
   onClose,
 }) => {
+  const [copied, setCopied] = useState(false);
   if (!invoice) return null;
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleWhatsApp = () => {
+    const phone = (tenant?.phone || '').replace(/[^\d+]/g, '');
+    const isReceipt = invoice.type === 'recibo';
+    const msg = `Hola ${tenant?.name || ''}, te adjuntamos los datos de tu ${
+      isReceipt ? 'recibo de alquiler' : 'factura'
+    } ${invoice.number} (${invoice.concept}).
+Total a abonar: ${formatCurrency(invoice.totalAmount)}
+Fecha límite: ${formatDate(invoice.dueDate)}
+IBAN de abono: ${settings.landlordIban || '-'}
+Concepto transferencia: ${invoice.number} - ${tenant?.name || ''}
+¡Muchas gracias!`;
+
+    const url = phone
+      ? `https://wa.me/${phone.replace('+', '')}?text=${encodeURIComponent(msg)}`
+      : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+    window.open(url, '_blank');
+  };
+
+  const handleCopyPaymentInfo = () => {
+    const text = `Recibo / Factura: ${invoice.number}\nConcepto: ${invoice.concept}\nImporte: ${formatCurrency(
+      invoice.totalAmount
+    )}\nIBAN de ingreso: ${settings.landlordIban || '-'}\nTitular: ${settings.landlordName}`;
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const isReceipt = invoice.type === 'recibo';
@@ -30,7 +69,7 @@ export const InvoicePrintModal: React.FC<InvoicePrintModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 overflow-y-auto">
       <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] flex flex-col overflow-hidden border border-slate-200">
         {/* Header Toolbar */}
-        <div className="px-6 py-4 bg-slate-800 text-white flex items-center justify-between no-print">
+        <div className="px-6 py-4 bg-slate-900 text-white flex items-center justify-between no-print">
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center font-bold">
               {isReceipt ? 'R' : 'F'}
@@ -45,9 +84,25 @@ export const InvoicePrintModal: React.FC<InvoicePrintModalProps> = ({
 
           <div className="flex items-center space-x-2">
             <button
+              onClick={handleWhatsApp}
+              title="Compartir datos del recibo con el inquilino por WhatsApp"
+              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg flex items-center space-x-1.5 transition-colors shadow-sm"
+            >
+              <MessageCircle className="w-4 h-4" />
+              <span className="hidden sm:inline">WhatsApp</span>
+            </button>
+            <button
+              onClick={handleCopyPaymentInfo}
+              title="Copiar datos bancarios al portapapeles"
+              className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-medium rounded-lg flex items-center space-x-1.5 transition-colors"
+            >
+              {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+              <span className="hidden sm:inline">{copied ? 'Copiado' : 'Copiar Datos'}</span>
+            </button>
+            <button
               onClick={handlePrint}
               id="print-invoice-btn"
-              className="px-3.5 py-1.5 bg-sky-600 hover:bg-sky-500 text-white text-sm font-medium rounded-lg flex items-center space-x-1.5 transition-colors shadow-sm"
+              className="px-3.5 py-1.5 bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold rounded-lg flex items-center space-x-1.5 transition-colors shadow-sm"
             >
               <Printer className="w-4 h-4" />
               <span>Imprimir / PDF</span>
@@ -55,7 +110,7 @@ export const InvoicePrintModal: React.FC<InvoicePrintModalProps> = ({
             <button
               onClick={onClose}
               id="close-print-modal-btn"
-              className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-700 transition-colors"
+              className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors ml-1"
             >
               <X className="w-5 h-5" />
             </button>

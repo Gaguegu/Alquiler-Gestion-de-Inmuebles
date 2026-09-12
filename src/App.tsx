@@ -32,12 +32,39 @@ import { DocumentsView } from './components/DocumentsView';
 import { ReportsView } from './components/ReportsView';
 import { SettingsView } from './components/SettingsView';
 import { InvoicePrintModal } from './components/InvoicePrintModal';
+import { InvestmentSimulatorView } from './components/InvestmentSimulatorView';
+import { GlobalSearchModal } from './components/GlobalSearchModal';
+import { SepaRemittanceModal } from './components/SepaRemittanceModal';
+import { IpcCalculatorModal } from './components/IpcCalculatorModal';
+import { DepositSettlementModal } from './components/DepositSettlementModal';
+import { LegalTemplatesModal } from './components/LegalTemplatesModal';
 
 export default function App() {
   const [state, setState] = useState<AppState>(() => loadStoredState());
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [selectedPropertyId, setSelectedPropertyId] = useState<string>('all');
   const [printInvoiceId, setPrintInvoiceId] = useState<string | null>(null);
+
+  // Professional Modals State
+  const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
+  const [isSepaModalOpen, setIsSepaModalOpen] = useState<boolean>(false);
+  const [isIpcModalOpen, setIsIpcModalOpen] = useState<boolean>(false);
+  const [ipcContractId, setIpcContractId] = useState<string | undefined>(undefined);
+  const [isDepositModalOpen, setIsDepositModalOpen] = useState<boolean>(false);
+  const [depositContractId, setDepositContractId] = useState<string | undefined>(undefined);
+  const [isLegalModalOpen, setIsLegalModalOpen] = useState<boolean>(false);
+
+  // Global Keyboard shortcut (Ctrl+K or Cmd+K) for Global Search
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsSearchOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // Auto-persist state changes
   useEffect(() => {
@@ -341,6 +368,57 @@ export default function App() {
     }));
   };
 
+  // IPC update handler
+  const handleApplyIpcUpdate = (contractId: string, newRent: number, notes: string) => {
+    setState((prev) => ({
+      ...prev,
+      contracts: prev.contracts.map((c) =>
+        c.id === contractId
+          ? {
+              ...c,
+              monthlyRent: newRent,
+              notes: c.notes ? `${c.notes}\n${notes}` : notes,
+            }
+          : c
+      ),
+    }));
+  };
+
+  // SEPA mark as paid batch handler
+  const handleMarkBatchInvoicesPaid = (invoiceIds: string[]) => {
+    setState((prev) => ({
+      ...prev,
+      invoices: prev.invoices.map((inv) =>
+        invoiceIds.includes(inv.id)
+          ? {
+              ...inv,
+              status: 'cobrado',
+              paidAmount: inv.totalAmount,
+              paymentMethod: 'domiciliacion',
+            }
+          : inv
+      ),
+    }));
+  };
+
+  // Deposit settlement document handler
+  const handleSaveDepositSettlement = (settlement: { title: string; content: string; contractId: string }) => {
+    const contract = state.contracts.find((c) => c.id === settlement.contractId);
+    if (!contract) return;
+    const doc: PropertyDocument = {
+      id: 'doc-settle-' + Date.now(),
+      propertyId: contract.propertyId,
+      title: settlement.title,
+      category: 'contrato',
+      date: new Date().toISOString().split('T')[0],
+      notes: settlement.content.slice(0, 300) + '...',
+    };
+    setState((prev) => ({
+      ...prev,
+      documents: [doc, ...prev.documents],
+    }));
+  };
+
   // Settings & Demo handlers
   const handleSaveSettings = (newSettings: LandlordSettings) => {
     setState((prev) => ({
@@ -386,6 +464,7 @@ export default function App() {
         onQuickBackup={handleQuickBackup}
         pendingInvoicesCount={pendingInvoicesCount}
         openIssuesCount={openIssuesCount}
+        onOpenSearch={() => setIsSearchOpen(true)}
       />
 
       {/* Main Content View Container */}
@@ -399,6 +478,12 @@ export default function App() {
             onOpenNewExpense={() => setActiveTab('expenses')}
             onOpenNewIssue={() => setActiveTab('issues')}
             onSelectInvoiceForPrint={(invId) => setPrintInvoiceId(invId)}
+            onOpenIpcCalculator={() => {
+              setIpcContractId(undefined);
+              setIsIpcModalOpen(true);
+            }}
+            onOpenSepaRemittance={() => setIsSepaModalOpen(true)}
+            onOpenLegalTemplates={() => setIsLegalModalOpen(true)}
           />
         )}
 
@@ -441,6 +526,15 @@ export default function App() {
             tenants={state.tenants}
             onSaveContract={handleSaveContract}
             onDeleteContract={handleDeleteContract}
+            onOpenIpcCalculator={(cId) => {
+              setIpcContractId(cId);
+              setIsIpcModalOpen(true);
+            }}
+            onOpenDepositSettlement={(cId) => {
+              setDepositContractId(cId);
+              setIsDepositModalOpen(true);
+            }}
+            onOpenLegalTemplates={() => setIsLegalModalOpen(true)}
           />
         )}
 
@@ -460,7 +554,12 @@ export default function App() {
             onMarkAsPaid={handleMarkAsPaid}
             onOpenPrintModal={(inv) => setPrintInvoiceId(inv.id)}
             onMassGenerateReceipts={handleMassGenerateReceipts}
+            onOpenSepaRemittance={() => setIsSepaModalOpen(true)}
           />
+        )}
+
+        {activeTab === 'simulator' && (
+          <InvestmentSimulatorView properties={state.properties} />
         )}
 
         {activeTab === 'payments' && (
@@ -539,6 +638,76 @@ export default function App() {
           tenant={activePrintTenant}
           settings={state.settings}
           onClose={() => setPrintInvoiceId(null)}
+        />
+      )}
+
+      {/* Global Instant Search (Ctrl+K / Cmd+K) */}
+      {isSearchOpen && (
+        <GlobalSearchModal
+          state={state}
+          isOpen={isSearchOpen}
+          onClose={() => setIsSearchOpen(false)}
+          onNavigate={(tab, filterId) => {
+            setActiveTab(tab);
+            if (filterId && tab === 'properties') {
+              setSelectedPropertyId(filterId);
+            }
+          }}
+          onSelectInvoicePrint={(invId) => setPrintInvoiceId(invId)}
+        />
+      )}
+
+      {/* SEPA Direct Debit Remittance (pain.008 XML) */}
+      {isSepaModalOpen && (
+        <SepaRemittanceModal
+          invoices={state.invoices}
+          tenants={state.tenants}
+          properties={state.properties}
+          contracts={state.contracts}
+          settings={state.settings}
+          onClose={() => setIsSepaModalOpen(false)}
+          onMarkAsPaid={handleMarkBatchInvoicesPaid}
+        />
+      )}
+
+      {/* IPC / IRAV Rent Revision Calculator (Art. 18 LAU) */}
+      {isIpcModalOpen && (
+        <IpcCalculatorModal
+          contracts={state.contracts}
+          properties={state.properties}
+          tenants={state.tenants}
+          preselectedContractId={ipcContractId}
+          onClose={() => {
+            setIsIpcModalOpen(false);
+            setIpcContractId(undefined);
+          }}
+          onApplyUpdate={handleApplyIpcUpdate}
+        />
+      )}
+
+      {/* Deposit Settlement & Check-out Protocol */}
+      {isDepositModalOpen && (
+        <DepositSettlementModal
+          contracts={state.contracts}
+          properties={state.properties}
+          tenants={state.tenants}
+          preselectedContractId={depositContractId}
+          onClose={() => {
+            setIsDepositModalOpen(false);
+            setDepositContractId(undefined);
+          }}
+          onSaveSettlement={handleSaveDepositSettlement}
+        />
+      )}
+
+      {/* Legal Contract & Formal Notice LAU Templates */}
+      {isLegalModalOpen && (
+        <LegalTemplatesModal
+          contracts={state.contracts}
+          properties={state.properties}
+          tenants={state.tenants}
+          settings={state.settings}
+          onClose={() => setIsLegalModalOpen(false)}
         />
       )}
 
